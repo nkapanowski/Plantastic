@@ -4,159 +4,306 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
+
+import java.util.HashMap;
+
+
 public class Plantastic extends Application {
+
 
     private int ecoFriendlyPoints = 0;
     private int ecoFriendlyLevel = 1;
     private Label ecoFriendlyMeterLabel;
     private BorderPane mainLayout;
 
-    private VBox treePatch, flowerPatch, housePlantPatch;
+
+    private HashMap<String, Plant> plants = new HashMap<>(); // Stores the plant information (name, growth stage, clicks)
+
+
+    private int[] unlockedPlants = {1, 1, 1}; // Number of unlocked plants per category
+
+
     private String[][] plantOptions = {
-            {"Birch Tree", "Maple Tree", "Palm Tree", "Bonsai Tree"},
-            {"Daffodil", "Chrysanthemum", "Poppy", "Rose", "Sunflower"},
-            {"Succulent", "Bamboo", "Fern", "Monstera", "Aloe Vera"}
+            {"Birch Tree", "Maple Tree", "Spruce Tree", "Palm Tree", "Acadia Tree"}, // Trees
+            {"Daffodil", "Orchaid", "Poppy", "Rose", "Sunflower"},            // Flowers
+            {"Succulent", "Bamboo", "Fern", "Monstera", "Aloe Vera"}                // Houseplants
     };
 
-    private enum GrowthStage {
-        SEED, SPROUT, BLOSSOM;
 
-        public GrowthStage next() {
-            return this.ordinal() < GrowthStage.values().length - 1
-                    ? GrowthStage.values()[this.ordinal() + 1]
-                    : this; // Stay at BLOSSOM
-        }
+    private Button[] categoryButtons = new Button[3]; // Store category buttons for color update
+
+
+    public static void main(String[] args) {
+        launch(args);
     }
+
 
     @Override
     public void start(Stage primaryStage) {
         primaryStage.setTitle("Plantastic Clicker Game");
 
+
         // Main layout
         mainLayout = new BorderPane();
 
+
         // Initial start screen
         VBox startScreen = new VBox(20);
-        startScreen.setStyle("-fx-alignment: center; -fx-padding: 50;");
+        startScreen.setStyle("-fx-alignment: center; -fx-padding: 50; -fx-background-color: lightgreen;");
+
 
         Label welcomeLabel = new Label("Welcome to Plantastic!");
-        welcomeLabel.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+        welcomeLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
         Button startButton = new Button("Start");
-        startButton.setFont(Font.font("Arial", 16));
+        startButton.setStyle("-fx-font-size: 16px;");
+        startButton.setOnAction(event -> showCategorySelection());
 
-        // Remove default focus styling for the start button
-        startButton.setStyle("-fx-focus-color: transparent; -fx-faint-focus-color: transparent;");
-
-        startButton.setOnAction(event -> initializeGame());
 
         startScreen.getChildren().addAll(welcomeLabel, startButton);
         mainLayout.setCenter(startScreen);
 
-        Scene scene = new Scene(mainLayout, 900, 600);
+
+        Scene scene = new Scene(mainLayout, 600, 400);
         primaryStage.setScene(scene);
         primaryStage.show();
     }
 
-    private void initializeGame() {
-        // Create the game layout
+
+    private void showCategorySelection() {
+        VBox categorySelection = new VBox(20);
+        categorySelection.setStyle("-fx-alignment: center; -fx-padding: 50; -fx-background-color: lightgreen;");
+
+
+        Label selectLabel = new Label("Select a plant category to start:");
+        selectLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
+
+
+        // Buttons for each category
+        Button treeButton = new Button("Trees");
+        treeButton.setStyle("-fx-font-size: 16px;");
+        treeButton.setOnAction(event -> initializeGame(0));
+
+
+        Button flowerButton = new Button("Flowers");
+        flowerButton.setStyle("-fx-font-size: 16px;");
+        flowerButton.setOnAction(event -> initializeGame(1));
+
+
+        Button housePlantButton = new Button("Houseplants");
+        housePlantButton.setStyle("-fx-font-size: 16px;");
+        housePlantButton.setOnAction(event -> initializeGame(2));
+
+
+        // Save the category buttons for later style updates
+        categoryButtons[0] = treeButton;
+        categoryButtons[1] = flowerButton;
+        categoryButtons[2] = housePlantButton;
+
+
+        categorySelection.getChildren().addAll(selectLabel, treeButton, flowerButton, housePlantButton);
+        mainLayout.setCenter(categorySelection);
+    }
+
+
+    private void initializeGame(int categoryIndex) {
         VBox gameLayout = new VBox(20);
         gameLayout.setPadding(new Insets(20));
-        gameLayout.setStyle("-fx-alignment: center;");
+        gameLayout.setStyle("-fx-alignment: center; -fx-background-color: lightgreen;");
 
-        // Add the Eco-Friendly Meter at the top
+
+        // Back Button
+        Button backButton = new Button("Back to Main Menu");
+        backButton.setStyle("-fx-font-size: 14px;");
+        backButton.setOnAction(event -> showCategorySelection());
+        gameLayout.getChildren().add(backButton);
+
+
+        // Eco-Friendly Meter
         ecoFriendlyMeterLabel = new Label("Eco-Friendly Meter: Level 1 (0 points)");
-        ecoFriendlyMeterLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
         ecoFriendlyMeterLabel.setStyle(
-                "-fx-border-color: green; -fx-border-width: 2; -fx-border-radius: 5; -fx-padding: 10; -fx-background-color: #f0fff0;");
+                "-fx-font-size: 18px; -fx-border-color: green; -fx-border-width: 2; -fx-padding: 10;");
         gameLayout.getChildren().add(ecoFriendlyMeterLabel);
 
-        // Add plant patches
-        HBox patchesLayout = new HBox(20);
-        patchesLayout.setPadding(new Insets(10));
-        patchesLayout.setStyle("-fx-alignment: center;");
 
-        treePatch = createPatch("Tree Patch");
-        flowerPatch = createPatch("Flower Patch");
-        housePlantPatch = createPatch("House Plant Patch");
+        // Add plant buttons for the selected category
+        VBox plantButtons = new VBox(10);
+        plantButtons.setStyle("-fx-padding: 10;");
 
-        patchesLayout.getChildren().addAll(treePatch, flowerPatch, housePlantPatch);
 
-        gameLayout.getChildren().add(patchesLayout);
+        for (int i = 0; i < plantOptions[categoryIndex].length; i++) {
+            int plantIndex = i;
+            String plantName = plantOptions[categoryIndex][plantIndex];
+
+
+            // Initialize all plants with SEED stage and 0 clicks
+            plants.put(plantName, new Plant(plantName, GrowthStage.SEED, 0));
+
+
+            Button plantButton = new Button(plantName + " (Seed)");
+            plantButton.setStyle("-fx-font-size: 14px;");
+            plantButton.setVisible(i < unlockedPlants[categoryIndex]); // Hide locked plants
+
+
+            plantButton.setOnAction(event -> {
+                ecoFriendlyPoints += 2; // Increment points per click
+                updateEcoFriendlyMeter();
+
+
+                // Update plant growth stage
+                Plant plant = plants.get(plantName);
+                plant.incrementClicks();
+
+
+                // Update button text
+                plantButton.setText(plant.getName() + " (" + plant.getGrowthStage() + ")");
+
+
+                // Unlock next plant when this plant reaches FULLY_GROWN
+                if (plant.getGrowthStage() == GrowthStage.FULLY_GROWN && plantIndex + 1 < plantButtons.getChildren().size()) {
+                    unlockNextPlant(plantButtons, plantIndex + 1, categoryIndex);
+                }
+
+
+                // Check if all plants in the category are fully grown
+                checkCategoryCompletion(categoryIndex);
+            });
+
+
+            plantButtons.getChildren().add(plantButton);
+        }
+
+
+        gameLayout.getChildren().add(plantButtons);
         mainLayout.setCenter(gameLayout);
-
-        updatePatches(); // Initialize with no plants visible
     }
 
-    private VBox createPatch(String title) {
-        VBox patchBox = new VBox(10);
-        patchBox.setPadding(new Insets(10));
-        patchBox.setStyle("-fx-border-color: black; -fx-border-width: 2; -fx-border-radius: 10; -fx-background-color: #e8f5e9;");
 
-        Label patchTitle = new Label(title);
-        patchTitle.setFont(Font.font("Arial", FontWeight.BOLD, 16));
-
-        VBox plantsBox = new VBox(10); // Empty initially; plants are added dynamically
-        patchBox.getChildren().addAll(patchTitle, plantsBox);
-        return patchBox;
-    }
-
-    private void updatePatches() {
-        updatePatch(treePatch, plantOptions[0], 2);
-        updatePatch(flowerPatch, plantOptions[1], 3);
-        updatePatch(housePlantPatch, plantOptions[2], 4);
-    }
-
-    private void updatePatch(VBox patch, String[] plants, int pointsPerClick) {
-        VBox plantsBox = (VBox) patch.getChildren().get(1); // Plants container
-        plantsBox.getChildren().clear(); // Clear previous plants
-        for (int i = 0; i < ecoFriendlyLevel && i < plants.length; i++) {
-            plantsBox.getChildren().add(createPlantBox(plants[i], pointsPerClick));
+    private void unlockNextPlant(VBox plantButtons, int nextPlantIndex, int categoryIndex) {
+        if (nextPlantIndex < plantButtons.getChildren().size()) {
+            Button nextPlantButton = (Button) plantButtons.getChildren().get(nextPlantIndex);
+            nextPlantButton.setVisible(true);
+            unlockedPlants[categoryIndex] = nextPlantIndex + 1;
         }
     }
 
-    private VBox createPlantBox(String plantName, int pointsPerClick) {
-        VBox plantBox = new VBox(5);
-        plantBox.setPadding(new Insets(5));
-        plantBox.setStyle("-fx-background-color: #f9fbe7; -fx-background-radius: 5;");
-
-        Label plantLabel = new Label(plantName + " (Seed)");
-        Button plantButton = new Button("Grow " + plantName);
-
-        // Remove default focus styling for the button
-        plantButton.setStyle("-fx-focus-color: transparent; -fx-faint-focus-color: transparent;");
-
-        GrowthStage[] stage = {GrowthStage.SEED}; // Initial stage
-
-        plantButton.setOnAction(event -> {
-            if (stage[0] != GrowthStage.BLOSSOM) {
-                stage[0] = stage[0].next();
-                plantLabel.setText(plantName + " (" + stage[0] + ")");
-
-                // Add points to the Eco-Friendly Meter
-                ecoFriendlyPoints += pointsPerClick;
-                updateEcoFriendlyMeter();
-            }
-        });
-
-        plantBox.getChildren().addAll(plantLabel, plantButton);
-        return plantBox;
-    }
 
     private void updateEcoFriendlyMeter() {
-        if (ecoFriendlyPoints >= ecoFriendlyLevel * 5 && ecoFriendlyLevel < 5) {
+        int pointsNeededForNextLevel = ecoFriendlyLevel * 10;
+        if (ecoFriendlyPoints >= pointsNeededForNextLevel) {
             ecoFriendlyLevel++;
         }
-        ecoFriendlyMeterLabel.setText("Eco-Friendly Meter: Level " + ecoFriendlyLevel + " (" + ecoFriendlyPoints + " points)");
-        updatePatches();
+        ecoFriendlyMeterLabel.setText(
+                "Eco-Friendly Meter: Level " + ecoFriendlyLevel + " (" + ecoFriendlyPoints + " points)");
     }
 
-    public static void main(String[] args) {
-        launch(args);
+
+    // Check if all plants in the category are fully grown
+    private void checkCategoryCompletion(int categoryIndex) {
+        boolean allFullyGrown = true;
+        for (int i = 0; i < plantOptions[categoryIndex].length; i++) {
+            String plantName = plantOptions[categoryIndex][i];
+            Plant plant = plants.get(plantName);
+            System.out.println("Checking plant: " + plantName + " | Growth Stage: " + plant.getGrowthStage()); // Debugging line
+            if (plant.getGrowthStage() != GrowthStage.FULLY_GROWN) {
+                allFullyGrown = false;
+                break;
+            }
+        }
+
+
+        if (allFullyGrown) {
+            System.out.println("All plants in category " + getCategoryName(categoryIndex) + " are fully grown!"); // Debugging line
+            displayCategoryCompletionMessage(categoryIndex);
+
+
+            // Make sure the button's background color changes to dark green
+            categoryButtons[categoryIndex].setStyle("-fx-background-color: darkgreen; -fx-text-fill: white;"); // Change button color to dark green
+        }
+    }
+
+
+    // Display completion message when all plants in a category are fully grown
+    private void displayCategoryCompletionMessage(int categoryIndex) {
+        VBox completionMessageLayout = new VBox(20);
+        completionMessageLayout.setStyle("-fx-alignment: center; -fx-padding: 50; -fx-background-color: lightgreen;");
+
+
+        String categoryName = getCategoryName(categoryIndex);
+        Label completionMessage = new Label(categoryName + " category complete!");
+        completionMessage.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
+
+
+        Button backButton = new Button("Back to Category Selection");
+        backButton.setStyle("-fx-font-size: 16px;");
+        backButton.setOnAction(event -> showCategorySelection());
+
+
+        completionMessageLayout.getChildren().addAll(completionMessage, backButton);
+        mainLayout.setCenter(completionMessageLayout);
+    }
+
+
+    // Get the category name based on the index
+    private String getCategoryName(int categoryIndex) {
+        switch (categoryIndex) {
+            case 0: return "Tree";
+            case 1: return "Flower";
+            case 2: return "Houseplant";
+            default: return "Unknown";
+        }
+    }
+
+
+    // GrowthStage enum
+    enum GrowthStage {
+        SEED,
+        SPROUT,
+        BLOSSOM,
+        FULLY_GROWN;
+
+
+        public GrowthStage next() {
+            return this.ordinal() < values().length - 1 ? values()[this.ordinal() + 1] : this;
+        }
+    }
+
+
+    // Plant class with growth stage and click counter
+    class Plant {
+        private String name;
+        private GrowthStage growthStage;
+        private int clicks;
+
+
+        public Plant(String name, GrowthStage growthStage, int clicks) {
+            this.name = name;
+            this.growthStage = growthStage;
+            this.clicks = clicks;
+        }
+
+
+        public String getName() {
+            return name;
+        }
+
+
+        public GrowthStage getGrowthStage() {
+            return growthStage;
+        }
+
+
+        public void incrementClicks() {
+            clicks++;
+            if (clicks >= 5 && growthStage == GrowthStage.SEED) {
+                growthStage = GrowthStage.SPROUT;
+            } else if (clicks >= 10 && growthStage == GrowthStage.SPROUT) {
+                growthStage = GrowthStage.BLOSSOM;
+            } else if (clicks >= 15 && growthStage == GrowthStage.BLOSSOM) {
+                growthStage = GrowthStage.FULLY_GROWN;
+            }
+        }
     }
 }
