@@ -20,7 +20,7 @@ public class Plantastic extends Application {
     private BorderPane mainLayout;
 
 
-    private HashMap<String, Plant> plants = new HashMap<>(); // Stores the plant information (name, growth stage, clicks)
+    private HashMap<String, Plant> plants = new HashMap<>(); // Stores plant information
 
 
     private int[] unlockedPlants = {1, 1, 1}; // Number of unlocked plants per category
@@ -46,7 +46,7 @@ public class Plantastic extends Application {
         primaryStage.setTitle("Plantastic Clicker Game");
 
 
-        // Main layout
+        // Layout
         mainLayout = new BorderPane();
 
 
@@ -97,7 +97,7 @@ public class Plantastic extends Application {
         housePlantButton.setOnAction(event -> initializeGame(2));
 
 
-        // Save the category buttons for later style updates
+        
         categoryButtons[0] = treeButton;
         categoryButtons[1] = flowerButton;
         categoryButtons[2] = housePlantButton;
@@ -128,7 +128,7 @@ public class Plantastic extends Application {
         gameLayout.getChildren().add(ecoFriendlyMeterLabel);
 
 
-        // Add plant buttons for the selected category
+        // Plant buttons for the selected category
         VBox plantButtons = new VBox(10);
         plantButtons.setStyle("-fx-padding: 10;");
 
@@ -138,7 +138,7 @@ public class Plantastic extends Application {
             String plantName = plantOptions[categoryIndex][plantIndex];
 
 
-            // Initialize all plants with SEED stage and 0 clicks
+            // Initialize all plants with SEED stage at 0 clicks
             plants.put(plantName, new Plant(plantName, GrowthStage.SEED, 0));
 
 
@@ -157,7 +157,7 @@ public class Plantastic extends Application {
                 plant.incrementClicks();
 
 
-                // Update button text
+                
                 plantButton.setText(plant.getName() + " (" + plant.getGrowthStage() + ")");
 
 
